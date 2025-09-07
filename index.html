@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Blood Bank Compatibility Report</title>
+    <!-- Add QRCode.js Library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        @page {
+            size: A4;
+            margin: 0;
+        }
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            width: 21cm;
+            min-height: 29.7cm;
+            padding: 1.5cm;
+            color: #333;
+            margin: 0 auto;
+            background: white;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+        .form-container {margin-bottom: 1cm;padding: 0.5cm;background: #f9f9f9;border-radius: 5px;border: 1px solid #ddd;}
+        .form-section {margin-bottom: 0.4cm;}
+        .form-section h3 {color: #c62828;margin-bottom: 0.25cm;padding-bottom: 0.15cm;border-bottom: 1px solid #ddd;font-weight: bold;font-size: 7.5pt;}
+        .unit-header h4 {font-size: 10pt;font-weight: normal;margin: 0;}
+        .form-grid {display: grid;grid-template-columns: 1fr 1fr;gap: 0.25cm;}
+        .form-group {margin-bottom: 0.25cm;}
+        .form-group label {display: block;margin-bottom: 0.08cm;font-weight: normal;font-size: 9pt;color: #444;}
+        .form-group input, .form-group select {width: 100%;padding: 0.18cm;border: 1px solid #ddd;border-radius: 3px;font-size: 9pt;font-weight: 700;}
+        .blood-unit {background: #fff;padding: 0.25cm;border-radius: 3px;border: 1px solid #ddd;margin-bottom: 0.25cm;}
+        .unit-header {display: flex;justify-content: space-between;align-items: center;margin-bottom: 0.15cm;font-weight: normal;}
+        .remove-unit {background: #c62828;color: white;border: none;padding: 0.1cm 0.3cm;border-radius: 3px;cursor: pointer;font-size: 8pt;font-weight: 700;}
+        .action-buttons {display: flex;gap: 0.25cm;margin-top: 0.4cm;}
+        button {background: #c62828;color: white;border: none;padding: 0.3cm 0.5cm;border-radius: 4px;cursor: pointer;font-size: 9pt;font-weight: 700;}
+        button:hover {background: #b71c1c;}
+        .add-unit-btn {background: #2e7d32;}
+        .add-unit-btn:hover {background: #1b5e20;}
+        .print-btn {background: #1565c0;width: 100%;margin-top: 0.4cm;}
+        .print-btn:hover {background: #0d47a1;}
+        .header {margin-bottom: 0.4cm;padding-bottom: 0.25cm;border-bottom: 2px solid #e53935;}
+        .logo-bar {display: flex;flex-direction: row;align-items: center;justify-content: space-between;width: 100%;}
+        .logo-left, .logo-right {flex: 1;display: flex;justify-content: center;align-items: center;}
+        .heading-center {flex: 2;text-align: center;}
+        .heading-center h2 {font-size: 13pt;margin: 0; font-weight: bold;}
+        .heading-center p {margin: 0.1cm 0; font-weight: normal; font-size: 10pt;}
+        .report-title-container {display: flex;flex-direction: column;align-items: center;margin: 0.25cm 0;}
+        .document-date {
+            font-weight: bold;
+            font-size: 9pt;
+            margin-bottom: 0.4cm;
+            text-align: right;
+            width: 100%;
+        }
+        .report-title {color: #c62828;font-size: 12pt;text-align: center;margin-bottom: 0.4cm;font-weight: normal;}
+        .patient-info-flex {
+            display: flex;
+            flex-direction: row;
+            align-items: flex-start;
+            width: 100%;
+            margin-bottom: 0.4cm;
+            position: relative;
+        }
+        .patient-info-left {
+            flex: 2 1 0;
+            margin-right: 2cm;
+        }
+        .patient-info-qr {
+            flex: 0 0 120px;
+            display: flex;
+            align-items: flex-start;
+            justify-content: flex-end;
+            min-width: 120px;
+            position: absolute;
+            right: 0;
+            top: 0;
+        }
+        #qrCodeContainer {
+            width: 60px;
+            height: 60px;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid #ccc;
+        }
+        .patient-info-table {width: 100%;border-collapse: collapse;margin-bottom: 0.4cm;font-size: 9pt;}
+        .patient-info-table td {padding: 0.18cm;vertical-align: top;font-weight: normal;}
+        .patient-info-table td:first-child {width: 25%;}
+        .patient-info-table td:nth-child(even) {font-weight: 700;}
+        .report-table-container {display: flex;justify-content: center;margin-bottom: 0.4cm;}
+        .report-table {border-collapse: collapse;font-size: 9pt;table-layout: fixed;width: 100%;max-width: 100%;}
+        .report-table, .report-table th, .report-table td {border: 1px solid #ddd;}
+        .report-table th, .report-table td {padding: 0.18cm;text-align: center;font-weight: normal;}
+        .report-table th:nth-child(1), .report-table td:nth-child(1) {width: 5%;}
+        .report-table th:nth-child(2), .report-table td:nth-child(2) {width: 10%;}
+        .report-table th:nth-child(3), .report-table td:nth-child(3) {width: 11%;}
+        .report-table th:nth-child(4), .report-table td:nth-child(4) {width: 15%;}
+        .report-table th:nth-child(5), .report-table td:nth-child(5) {width: 10%;}
+        .report-table th:nth-child(6), .report-table td:nth-child(6) {width: 12%;}
+        .report-table th:nth-child(7), .report-table td:nth-child(7) {width: 12%;}
+        .report-table th:nth-child(8), .report-table td:nth-child(8) {width: 14%;}
+        .report-table th:nth-child(9), .report-table td:nth-child(9) {width: 10%;}
+        .report-table th:nth-child(10), .report-table td:nth-child(10) {width: 7%;}
+        .report-footer {margin-top: 0.4cm;font-size: 8.5pt;}
+        .signature-line {display: flex;justify-content: space-between;margin-top: 1.3cm;padding-top: 0.3cm;border-top: 1px solid #ddd;}
+        .signature-left {display: flex;flex-direction: column;align-items: flex-start;}
+        .signature-right {display: flex;flex-direction: column;align-items: center;}
+        .signature-technician-block {display: inline-block;text-align: center;width: max-content;}
+        .signature-name {font-weight: 700;margin-bottom: 0.05cm;width: 100%;}
+        .cls-signature-title {
+            font-size: 8pt;
+            color: #555;
+            font-weight: normal;
+            text-align: center;
+            width: 100%;
+            margin-left: 1.4cm;
+        }
+        .signature-title {font-size: 8pt;color: #555;font-weight: normal;text-align: center;width: 100%;margin-left: 0;}
+        .instructions {margin-top: 0.4cm;padding: 0.25cm;background-color: #f9f9f9;border-radius: 4px;border-left: 4px solid #c62828;font-size: 7.5pt;}
+        .instructions h4 {color: #c62828;margin-bottom: 0.15cm;font-size: 8pt;font-weight: normal;}
+        .instructions ol {padding-left: 1cm;column-count: 2;column-gap: 0.5cm;}
+        .instructions li {margin-bottom: 0.15cm;line-height: 1.2;break-inside: avoid;font-weight: normal;}
+        .report-section {display: none;}
+        .technician-selector {margin-top: 0.4cm;padding: 0.25cm;background: #f0f8ff;border-radius: 4px;border: 1px solid #b8daff;}
+        .technician-selector label {font-weight: 600;margin-right: 0.3cm;color: #004085;font-size: 9pt;}
+        .technician-selector select {padding: 0.18cm;border: 1px solid #b8daff;border-radius: 3px;font-weight: 600;color: #004085;font-size: 9pt;}
+        @media print {
+            body {box-shadow: none;margin: 0;padding: 1cm;}
+            .form-container,.action-buttons,.technician-selector {display: none;}
+            .report-section {display: block;}
+        }
+    </style>
+</head>
+<body>
+    <div class="form-container">
+        <div class="form-section">
+            <h3>Patient Information</h3>
+            <table class="patient-info-table">
+                <tr>
+                    <td>Patient's Name</td>
+                    <td><input type="text" id="patientName" placeholder="Enter patient's full name" /></td>
+                    <td>Age</td>
+                    <td><input type="text" id="patientAge" placeholder="Enter age" /></td>
+                </tr>
+                <tr>
+                    <td>Gender</td>
+                    <td>
+                        <select id="patientGender">
+                            <option value="">Select Gender</option>
+                            <option value="MALE">MALE</option>
+                            <option value="FEMALE">FEMALE</option>
+                            <option value="OTHER">OTHER</option>
+                        </select>
+                    </td>
+                    <td>Blood Group & Rh</td>
+                    <td>
+                        <select id="patientBloodGroup">
+                            <option value="">Select Blood Group</option>
+                            <option value="A POSITIVE">A POSITIVE</option>
+                            <option value="A NEGATIVE">A NEGATIVE</option>
+                            <option value="B POSITIVE">B POSITIVE</option>
+                            <option value="B NEGATIVE">B NEGATIVE</option>
+                            <option value="AB POSITIVE">AB POSITIVE</option>
+                            <option value="AB NEGATIVE">AB NEGATIVE</option>
+                            <option value="O POSITIVE">O POSITIVE</option>
+                            <option value="O NEGATIVE">O NEGATIVE</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td>Ward/Unit</td>
+                    <td><input type="text" id="patientWard" placeholder="Enter ward/unit" /></td>
+                    <td>Patient ID/CR No.</td>
+                    <td><input type="text" id="patientID" placeholder="Enter patient ID" /></td>
+                </tr>
+            </table>
+        </div>
+        <div class="form-section">
+            <h3>Blood Unit Information</h3>
+            <div id="bloodUnits">
+                <div class="blood-unit" id="unit1">
+                    <div class="unit-header">
+                        <h4>Blood Unit #1</h4>
+                        <button class="remove-unit" onclick="removeUnit(1)">Remove</button>
+                    </div>
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="crossMatchNo1">Cross Match No.</label>
+                            <input type="text" id="crossMatchNo1" placeholder="Enter cross match number" style="font-weight: 700" />
+                        </div>
+                        <div class="form-group">
+                            <label for="bagNo1">Bag No.</label>
+                            <input type="text" id="bagNo1" placeholder="Enter bag number" style="font-weight: 700" />
+                        </div>
+                        <div class="form-group">
+                            <label for="unitBloodGroup1">Unit Blood Group & Rh</label>
+                            <select id="unitBloodGroup1" class="unit-blood-group" style="font-weight: 700">
+                                <option value="">Select Blood Group</option>
+                                <option value="A POSITIVE">A POSITIVE</option>
+                                <option value="A NEGATIVE">A NEGATIVE</option>
+                                <option value="B POSITIVE">B POSITIVE</option>
+                                <option value="B NEGATIVE">B NEGATIVE</option>
+                                <option value="AB POSITIVE">AB POSITIVE</option>
+                                <option value="AB NEGATIVE">AB NEGATIVE</option>
+                                <option value="O POSITIVE">O POSITIVE</option>
+                                <option value="O NEGATIVE">O NEGATIVE</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="volume1">Volume (ml)</label>
+                            <input type="text" id="volume1" placeholder="Enter volume in ml" style="font-weight: 700" />
+                        </div>
+                        <div class="form-group">
+                            <label for="collectionDate1">Date of Collection</label>
+                            <input type="date" id="collectionDate1" style="font-weight: 700" />
+                        </div>
+                        <div class="form-group">
+                            <label for="expiryDate1">Date of Expiry</label>
+                            <input type="date" id="expiryDate1" style="font-weight: 700" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button class="add-unit-btn" onclick="addUnit()">+ Add Another Blood Unit</button>
+        </div>
+        <div class="form-section">
+            <div class="form-group">
+                <label for="reservationDate">Reservation Till</label>
+                <input type="date" id="reservationDate" />
+            </div>
+        </div>
+        <div class="technician-selector">
+            <label for="technicianSelect">Cross Match Done By:</label>
+            <select id="technicianSelect">
+                <option value="SAJITH B.S.">SAJITH B.S.</option>
+                <option value="SATHEESH MANI">SATHEESH MANI</option>
+            </select>
+        </div>
+        <button class="print-btn" onclick="generateAndPrintReport()">Print Report</button>
+    </div>
+    <div class="report-section" id="reportSection">
+        <div class="header">
+            <div class="logo-bar">
+                <div class="logo-left">
+                    <img src="1000181171.jpeg" alt="Indian Railways Logo" class="logo-img" width="60" height="60" />
+                </div>
+                <div class="heading-center">
+                    <h2 style="font-weight: bold; font-size: 14pt; margin-bottom: 0.1cm;">CENTRAL RAILWAY</h2>
+                    <p style="font-weight: normal; font-size: 10pt; margin-bottom: 0.1cm;">Dr. Babasaheb Ambedkar Memorial Hospital, Byculla, Mumbai-27</p>
+                    <p style="font-weight: bold; font-size: 10pt; margin-bottom: 0.1cm;">BLOOD STORAGE CENTRE</p>
+                    <p style="font-weight: bold; font-size: 8.5pt;">Licence No.: BSC/GM-03/2013</p>
+                </div>
+                <div class="logo-right">
+                    <img src="1000181170.jpeg" alt="Blood Storage Centre Logo" class="logo-img" width="90" height="90" />
+                </div>
+            </div>
+        </div>
+        <div class="report-title-container">
+            <div class="document-date">Date: <span id="reportDate"></span></div>
+            <h2 class="report-title">COMPATIBILITY REPORT</h2>
+        </div>
+        <div class="patient-info-flex">
+            <div class="patient-info-left">
+                <table class="patient-info-table">
+                    <tr>
+                        <td>Patient's Name:</td>
+                        <td id="reportPatientName"></td>
+                        <td>Patient Blood Group &amp; Rh:</td>
+                        <td id="reportPatientBloodGroup"></td>
+                    </tr>
+                    <tr>
+                        <td>Age:</td>
+                        <td id="reportPatientAge"></td>
+                        <td>Gender:</td>
+                        <td id="reportPatientGender"></td>
+                    </tr>
+                    <tr>
+                        <td>Ward/Unit:</td>
+                        <td id="reportPatientWard"></td>
+                        <td>PF / CR No.:</td>
+                        <td id="reportPatientID"></td>
+                    </tr>
+                </table>
+            </div>
+            <div class="patient-info-qr">
+                <div id="qrCodeContainer"></div>
+            </div>
+        </div>
+        <div class="report-table-container">
+            <table class="report-table" id="reportBloodUnits">
+                <thead>
+                    <tr>
+                        <th>Sr No</th>
+                        <th>Cross Match No</th>
+                        <th>Bag No</th>
+                        <th>Blood Group & Rh</th>
+                        <th>Vol. in ml.</th>
+                        <th>Date of Collection</th>
+                        <th>Date of Expiry</th>
+                        <th>Compatibility</th>
+                        <th>Date & Time Of Issue</th>
+                        <th>Issued By</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </table>
+        </div>
+        <div class="report-footer">
+            <p style="margin-bottom: 0.3cm;">Cross matching has been performed using <strong>Saline, Albumin &amp; Coombs</strong> methods.</p>
+            <p style="margin-bottom: 0.3cm;">Blood units are tested Negative for <strong>HIV 1&amp;2, HBsAg, HCV, VDRL, MP &amp; Abnormal Antibodies</strong> </p>
+            <p style="margin-bottom: 0.5cm;">Reservation is valid until: <strong><span id="reportReservationDate"></span></strong></p>
+            <p style="margin-bottom: 0.75cm;font-size: 7.5pt;"><strong>Please note that after the reservation date, the blood units will be released and will no longer be available for transfusion to this patient.</strong></p>
+            <div class="signature-line">
+                <div class="signature-left">
+                    <div class="signature-technician-block">
+                        <div class="signature-name">Cross Match Done By: <span id="reportTechnicianName">SAJITH B.S.</span></div>
+                        <div class="cls-signature-title">CLS</div>
+                    </div>
+                </div>
+                <div class="signature-right">
+                    <div class="signature-name">Dr. Ashay D. Amlekar MD (Pathology)</div>
+                    <div class="signature-title">Medical Officer</div>
+                </div>
+            </div>
+            <div class="instructions">
+                <h4>INSTRUCTIONS FOR TRANSFUSIONIST:</h4>
+                <ol>
+                    <li>Unit should be collected just prior to starting the transfusion. <strong>Do not store in ward refrigerators.</strong></li>
+                    <li>Keep the blood bag at room temperature for a maximum of 30 mins to bring the temperature to room temperature.</li>
+                    <li>Except in emergency avoid transfusion at night, both for patient's convenience and for transfusion under observation.</li>
+                    <li>Check blood for any physical changes like hemolysis, colour, turbidity etc. Do not transfuse if there is any visible deterioration.</li>
+                    <li>Cross check the blood group, bag no. with those on label and compatibility report.</li>
+                    <li>Administer through the disposable transfusion set with filter.</li>
+                    <li>Enter the time of starting transfusion.</li>
+                    <li>Record the vital signs before and after transfusion.</li>
+                    <li>Normal saline is the only recommended solution for use with blood.</li>
+                    <li>Do not add any drug to the blood.</li>
+                    <li><strong>Do not warm blood without proper equipment.</strong></li>
+                    <li>Do not give IV Avil or Decadron before starting transfusion.</li>
+                    <li>The rate of transfusion depends on the condition of the patient.</li>
+                    <li>Observe the patient for febrile reaction, hematuria and oliguria.</li>
+                    <li>In case of any reaction, stop the transfusion, inform the physician concerned & also intimate us.</li>
+                </ol>
+                <p style="margin-top: 0.3cm; font-weight: bold;text-align: center;">Blood Unit once issued will not be taken back.</p>
+                <p style="margin-top: 0.3cm; font-weight: bold;text-align: center;">Please note that blood transfusion is a dangerous procedure. Use utmost care.</p>
+            </div>
+        </div>
+    </div>
+<script>
+    let unitCount = 1;
+    window.onload = () => {
+        const reservationDate = new Date();
+        reservationDate.setDate(reservationDate.getDate() + 2);
+        document.getElementById('reservationDate').valueAsDate = reservationDate;
+        document.getElementById('patientBloodGroup').addEventListener('change', e => {
+            document.querySelectorAll('.unit-blood-group').forEach(select => select.value = e.target.value);
+        });
+    };
+    function addUnit() {
+        unitCount++;
+        const patientBloodGroup = document.getElementById('patientBloodGroup').value;
+        const bloodUnitsDiv = document.getElementById('bloodUnits');
+        const unitDiv = document.createElement('div');
+        unitDiv.className = 'blood-unit';
+        unitDiv.id = `unit${unitCount}`;
+        unitDiv.innerHTML = `
+            <div class="unit-header">
+                <h4>Blood Unit #${unitCount}</h4>
+                <button class="remove-unit" onclick="removeUnit(${unitCount})">Remove</button>
+            </div>
+            <div class="form-grid">
+                ${['crossMatchNo','bagNo','unitBloodGroup','volume','collectionDate','expiryDate'].map(id => {
+                    const labels = {
+                        crossMatchNo: 'Cross Match No.',
+                        bagNo: 'Bag No.',
+                        unitBloodGroup: 'Unit Blood Group & Rh',
+                        volume: 'Volume (ml)',
+                        collectionDate: 'Date of Collection',
+                        expiryDate: 'Date of Expiry'
+                    };
+                    if(id === 'unitBloodGroup') {
+                        return `<div class="form-group">
+                            <label for="${id}${unitCount}">${labels[id]}</label>
+                            <select id="${id}${unitCount}" class="unit-blood-group" style="font-weight:700;">
+                                <option value="">Select Blood Group</option>
+                                ${['A POSITIVE','A NEGATIVE','B POSITIVE','B NEGATIVE','AB POSITIVE','AB NEGATIVE','O POSITIVE','O NEGATIVE']
+                                    .map(bg => `<option value="${bg}"${bg === patientBloodGroup ? ' selected' : ''}>${bg}</option>`).join('')}
+                            </select>
+                        </div>`;
+                    } else {
+                        const type = (id === 'collectionDate' || id === 'expiryDate') ? 'date' : 'text';
+                        return `<div class="form-group">
+                            <label for="${id}${unitCount}">${labels[id]}</label>
+                            <input type="${type}" id="${id}${unitCount}" placeholder="Enter ${labels[id].toLowerCase()}" style="font-weight:700;">
+                        </div>`;
+                    }
+                }).join('')}
+            </div>
+        `;
+        bloodUnitsDiv.appendChild(unitDiv);
+    }
+    function removeUnit(id) {
+        if(unitCount > 1) {
+            document.getElementById(`unit${id}`)?.remove();
+            unitCount--;
+            const units = document.querySelectorAll('.blood-unit');
+            units.forEach((unit, i) => {
+                const newId = i + 1;
+                unit.id = `unit${newId}`;
+                unit.querySelector('h4').textContent = `Blood Unit #${newId}`;
+                unit.querySelector('.remove-unit').setAttribute('onclick', `removeUnit(${newId})`);
+            });
+        }
+    }
+    function formatDate(date, short = false) {
+        const pad = (num) => num.toString().padStart(2, '0');
+        if(short) {
+            const day = pad(date.getDate());
+            const month = date.toLocaleString('default', { month: 'short' }).toUpperCase();
+            const year = date.getFullYear().toString().slice(-2);
+            return `${day}-${month}-${year}`;
+        }
+        const day = pad(date.getDate());
+        const month = pad(date.getMonth() + 1);
+        const year = date.getFullYear();
+        return `${day}/${month}/${year}`;
+    }
+    function generateReport() {
+        const patientFields = ['patientName','patientAge','patientGender','patientBloodGroup','patientWard','patientID'];
+        const patientData = {};
+        patientFields.forEach(id => {
+            patientData[id] = document.getElementById(id).value || 'Not Provided';
+        });
+        const technicianName = document.getElementById('technicianSelect').value;
+
+        document.getElementById('reportPatientName').textContent = patientData.patientName;
+        document.getElementById('reportPatientAge').textContent = patientData.patientAge !== 'Not Provided' ? patientData.patientAge + ' Yrs' : 'Not Provided';
+        document.getElementById('reportPatientGender').textContent = patientData.patientGender;
+        document.getElementById('reportPatientBloodGroup').textContent = patientData.patientBloodGroup ? `'${patientData.patientBloodGroup.split(' ')[0]}' ${patientData.patientBloodGroup.split(' ')[1]}` : 'Not Provided';
+        document.getElementById('reportPatientWard').textContent = patientData.patientWard;
+        document.getElementById('reportPatientID').textContent = patientData.patientID;
+        document.getElementById('reportTechnicianName').textContent = technicianName;
+        document.getElementById('reportDate').textContent = formatDate(new Date());
+
+        const reportTable = document.getElementById('reportBloodUnits');
+        while(reportTable.rows.length > 1) reportTable.deleteRow(1);
+
+        let qrLines = [];
+
+        for(let i=1; i<=unitCount; i++){
+            const bagNo = document.getElementById(`bagNo${i}`)?.value || 'Not Provided';
+            const bg = document.getElementById(`unitBloodGroup${i}`)?.value || 'Not Provided';
+            const vol = document.getElementById(`volume${i}`)?.value || 'Not Provided';
+            let collDate = document.getElementById(`collectionDate${i}`)?.value;
+            collDate = collDate ? formatDate(new Date(collDate), true) : 'Not Provided';
+            let expDate = document.getElementById(`expiryDate${i}`)?.value;
+            expDate = expDate ? formatDate(new Date(expDate), true) : 'Not Provided';
+
+            qrLines.push(`Bag ${i}:  Bag No: ${bagNo}, Group: ${bg}, Collection: ${collDate}, Expiry: ${expDate}, Compatible`);
+
+            const row = reportTable.insertRow();
+            row.innerHTML = `
+                <td>${i}</td>
+                <td>${document.getElementById(`crossMatchNo${i}`)?.value || 'Not Provided'}</td>
+                <td>${bagNo}</td>
+                <td>${bg ? `'${bg.split(' ')[0]}' ${bg.split(' ')[1]}` : 'Not Provided'}</td>
+                <td>${vol} ${vol !== 'Not Provided' ? 'ml.' : ''}</td>
+                <td>${collDate}</td>
+                <td>${expDate}</td>
+                <td>COMPATIBLE</td>
+                <td></td>
+                <td></td>
+            `;
+            for(let c=1; c<=6; c++) row.cells[c].style.fontWeight = '700';
+        }
+        const reservationVal = document.getElementById('reservationDate').value;
+        document.getElementById('reportReservationDate').textContent = reservationVal ? formatDate(new Date(reservationVal)) : 'Not Provided';
+        document.getElementById('reportSection').style.display = 'block';
+
+        const qrData = 
+`Name: ${patientData.patientName}
+Age: ${patientData.patientAge} Yrs
+Gender: ${patientData.patientGender}
+Blood Group: ${patientData.patientBloodGroup}
+CR No.: ${patientData.patientID}
+Blood Units:
+${qrLines.join('\n')}
+`;
+        const qrContainer = document.getElementById('qrCodeContainer');
+        qrContainer.innerHTML = '';
+        new QRCode(qrContainer, {text: qrData, width: 100, height: 100, correctLevel: QRCode.CorrectLevel.M});
+        return true;
+    }
+    function generateAndPrintReport(){
+        if(generateReport()) setTimeout(() => window.print(), 500);
+    }
+</script>
+</body>
+</html>
